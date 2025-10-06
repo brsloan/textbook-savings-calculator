@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Savings Calculator</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div id="flexbox">
+      <div id="search-side">
+        <div class="panel">
+          <label for="search-input">Search: </label>
+          <input type="text" id="search-input" name="search-input" placeholder="ENGL 101" autocomplete="off">
+        </div>
+        <div class="panel" id="search-results-container">
+          <label for="results-list">Search Results: </label>
+          <button id="add-btn">Add Selected</button>
+          <div id="search-results"></div>
+        </div>
+        <div class="panel" id="upload-panel">
+          <input type="button" id="upload-csv-btn" value="Upload Csv">
+          <a href="#" id="help">Help</a>
+          <label id="number-items"></label>
+        </div>
+      </div>
+      <div id="added-side">
+        <div class="panel" id="added-textbooks-container">
+          <h1 id="table-title">Textbook Savings</h1>
+          <table id="added-textbooks-table">
+            <tr>
+              <th>Course</th>
+              <th>Title</th>
+              <th>Savings</th>
+            </tr>
+            <tr>
+              <td colspan="4">Add a textbook...</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script src="spring2025.js"></script>
+    <script src="savings-calc.js"></script>
+  </body>
+</html>
