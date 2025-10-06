@@ -10,41 +10,108 @@ var addedTextbooks = [];
 parseData(getSpring2025Data());
 fillSelectList(loadedTextbooks);
 
-searchInput.addEventListener('keyup', function(e){
-    var filtered = loadedTextbooks.filter(function(val){
-        return getTextSummary(val).includes(searchInput.value);
-    });
-    fillSelectList(filtered);
-});
+function parseData(csv){
+    var data = csvStringToArray(csv);
+    dataHeaders = data.shift();
+    dataHeaders.push('LineID');
+    loadedTextbooks = removeDuplicates(data).sort();
 
-uploadBtn.onclick = function(e){
-    uploadTextFile(function(csv){
-        parseData(csv);
-        fillSelectList(loadedTextbooks);
-    });
-}
-
-addButton.onclick = function(e){
-    addSelected();
-}
-
-document.getElementById('search-results').addEventListener('keydown', function(e){
-    if(e.key === 'Enter'){
-        e.preventDefault();
-        addSelected();
+    for(let i=0;i<loadedTextbooks.length;i++){
+        loadedTextbooks[i].push(i);
     }
-});
 
-document.getElementById('help').onclick = function(e){
-    showHelp();
+    itemCount.innerText = (data.length) + ' items loaded, ' + loadedTextbooks.length + ' unique values';
+
+    return data;
 }
 
-function showHelp(){
-    var helpDiv = document.createElement('div');
-    var helpText = document.createElement('p');
-    helpText.innerText = "CSV file must have data in columns with headers SUBJECT, COURSE, BOOK_TITLE, AUTHOR, and COST TO STUDENTS, with SUBJECT being the short form ('ENGL') and COURSE being the number ('10100'). Headers do not have to be in upper case.";
-    helpDiv.appendChild(helpText);
-    document.getElementById('upload-panel').appendChild(helpDiv);
+function csvStringToArray(strData)
+{
+    const objPattern = new RegExp(("(\\,|\\r?\\n|\\r|^)(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|([^\\,\\r\\n]*))"),"gi");
+    let arrMatches = null, arrData = [[]];
+    while (arrMatches = objPattern.exec(strData)){
+        if (arrMatches[1].length && arrMatches[1] !== ",")arrData.push([]);
+        arrData[arrData.length - 1].push(arrMatches[2] ? 
+            arrMatches[2].replace(new RegExp( "\"\"", "g" ), "\"") :
+            arrMatches[3]);
+    }
+
+    arrData = trimArrays(arrData);
+    
+    arrData[0] = arrData[0].map(function(val){
+        return val.toUpperCase();
+    });
+    
+    return arrData;
+}
+
+function trimArrays(arrs){
+    arrs[0] = arrs[0].filter(function(val){
+        return val != "";
+    });
+
+    for(i=1;i<arrs.length; i++){
+        arrs[i] = arrs[i].slice(0,arrs[0].length);
+    }
+
+    return arrs;
+}
+
+function removeDuplicates(books){
+    return uniqBy(books, getTextSummary);
+}
+
+function uniqBy(a, key) {
+    var seen = {};
+    return a.filter(function(item) {
+        var k = key(item);
+        return seen.hasOwnProperty(k) ? false : (seen[k] = true);
+    })
+}
+
+function fillSelectList(texts){
+    var resultsDiv = document.getElementById('search-results');
+    resultsDiv.innerHTML = '';
+    var resultsList = document.createElement('select');
+    resultsList.id = 'results-list';
+    resultsList.multiple = true;
+
+    const idIndex = dataHeaders.indexOf('LineID');
+
+    texts.forEach(function(book, i){
+        var summary = getTextSummary(book);
+        if(summary != ''){
+            var thisOption = document.createElement('option');
+            thisOption.value = book[idIndex];
+            thisOption.innerText = summary;
+            resultsList.appendChild(thisOption);
+        }
+    });
+
+    resultsDiv.appendChild(resultsList);
+}
+
+function getTextSummary(book){
+    var propIndexes = getPropertyIndexes();
+
+    var response = '';
+
+    if(book[propIndexes.subjectIndex] && book[propIndexes.subjectIndex] != ''){
+       response = book[propIndexes.subjectIndex] + ' ' + book[propIndexes.courseIndex] + ': ' + book[propIndexes.bookTitleIndex] + ' by ' + book[propIndexes.authorIndex] + ' - ' + book[propIndexes.costIndex];
+    }
+
+    return response;
+}
+
+function getPropertyIndexes(){
+    return {
+        subjectIndex: dataHeaders.indexOf('SUBJECT'),
+        courseIndex: dataHeaders.indexOf('COURSE'),
+        bookTitleIndex: dataHeaders.indexOf('BOOK_TITLE'),
+        authorIndex: dataHeaders.indexOf('AUTHOR'),
+        costIndex: dataHeaders.indexOf('COST TO STUDENTS'),
+        idIndex: dataHeaders.indexOf('LineID')
+    }
 }
 
 function addSelected(){
@@ -64,16 +131,6 @@ function addTextbooks(lineIds){
     });
 
     fillAddedList(addedTextbooks);
-}
-
-function removeTextbook(id){
-    const propIndexes = getPropertyIndexes();
-
-    var matchIndex = addedTextbooks.findIndex(function(bk){
-        return bk[propIndexes.idIndex] == id;
-    });
-
-    addedTextbooks.splice(matchIndex,1);
 }
 
 function fillAddedList(texts){
@@ -142,100 +199,14 @@ function fillAddedList(texts){
     document.getElementById('table-title').innerText = 'Textbook Savings: ' + '$' + totalSavings.toFixed(2);
 }
 
-function fillSelectList(texts){
-    var resultsDiv = document.getElementById('search-results');
-    resultsDiv.innerHTML = '';
-    var resultsList = document.createElement('select');
-    resultsList.id = 'results-list';
-    resultsList.multiple = true;
+function removeTextbook(id){
+    const propIndexes = getPropertyIndexes();
 
-    const idIndex = dataHeaders.indexOf('LineID');
-
-    texts.forEach(function(book, i){
-        var summary = getTextSummary(book);
-        if(summary != ''){
-            var thisOption = document.createElement('option');
-            thisOption.value = book[idIndex];
-            thisOption.innerText = summary;
-            resultsList.appendChild(thisOption);
-        }
+    var matchIndex = addedTextbooks.findIndex(function(bk){
+        return bk[propIndexes.idIndex] == id;
     });
 
-    resultsDiv.appendChild(resultsList);
-}
-
-function getTextSummary(book){
-    var propIndexes = getPropertyIndexes();
-
-    var response = '';
-
-    if(book[propIndexes.subjectIndex] && book[propIndexes.subjectIndex] != ''){
-       response = book[propIndexes.subjectIndex] + ' ' + book[propIndexes.courseIndex] + ': ' + book[propIndexes.bookTitleIndex] + ' by ' + book[propIndexes.authorIndex] + ' - ' + book[propIndexes.costIndex];
-    }
-
-    return response;
-}
-
-function getPropertyIndexes(){
-    return {
-        subjectIndex: dataHeaders.indexOf('SUBJECT'),
-        courseIndex: dataHeaders.indexOf('COURSE'),
-        bookTitleIndex: dataHeaders.indexOf('BOOK_TITLE'),
-        authorIndex: dataHeaders.indexOf('AUTHOR'),
-        costIndex: dataHeaders.indexOf('COST TO STUDENTS'),
-        idIndex: dataHeaders.indexOf('LineID')
-    }
-}
-
-function parseData(csv){
-    var data = csvStringToArray(csv);
-    dataHeaders = data.shift();
-    dataHeaders.push('LineID');
-    loadedTextbooks = removeDuplicates(data).sort();
-
-    for(let i=0;i<loadedTextbooks.length;i++){
-        loadedTextbooks[i].push(i);
-    }
-
-    itemCount.innerText = (data.length) + ' items loaded, ' + loadedTextbooks.length + ' unique values';
-
-    return data;
-}
-
-function removeDuplicates(books){
-    return uniqBy(books, getTextSummary);
-}
-
-function csvStringToArray(strData)
-{
-    const objPattern = new RegExp(("(\\,|\\r?\\n|\\r|^)(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|([^\\,\\r\\n]*))"),"gi");
-    let arrMatches = null, arrData = [[]];
-    while (arrMatches = objPattern.exec(strData)){
-        if (arrMatches[1].length && arrMatches[1] !== ",")arrData.push([]);
-        arrData[arrData.length - 1].push(arrMatches[2] ? 
-            arrMatches[2].replace(new RegExp( "\"\"", "g" ), "\"") :
-            arrMatches[3]);
-    }
-
-    arrData = trimArrays(arrData);
-    
-    arrData[0] = arrData[0].map(function(val){
-        return val.toUpperCase();
-    });
-    
-    return arrData;
-}
-
-function trimArrays(arrs){
-    arrs[0] = arrs[0].filter(function(val){
-        return val != "";
-    });
-
-    for(i=1;i<arrs.length; i++){
-        arrs[i] = arrs[i].slice(0,arrs[0].length);
-    }
-
-    return arrs;
+    addedTextbooks.splice(matchIndex,1);
 }
 
 function uploadTextFile(callback){
@@ -260,12 +231,42 @@ function uploadTextFile(callback){
   fileInput.click();
 }
 
-function uniqBy(a, key) {
-    var seen = {};
-    return a.filter(function(item) {
-        var k = key(item);
-        return seen.hasOwnProperty(k) ? false : (seen[k] = true);
-    })
+
+function showHelp(){
+    var helpDiv = document.createElement('div');
+    var helpText = document.createElement('p');
+    helpText.innerText = "CSV file must have data in columns with headers SUBJECT, COURSE, BOOK_TITLE, AUTHOR, and COST TO STUDENTS, with SUBJECT being the short form ('ENGL') and COURSE being the number ('10100'). Headers do not have to be in upper case.";
+    helpDiv.appendChild(helpText);
+    document.getElementById('upload-panel').appendChild(helpDiv);
+}
+
+searchInput.addEventListener('keyup', function(e){
+    var filtered = loadedTextbooks.filter(function(val){
+        return getTextSummary(val).includes(searchInput.value);
+    });
+    fillSelectList(filtered);
+});
+
+uploadBtn.onclick = function(e){
+    uploadTextFile(function(csv){
+        parseData(csv);
+        fillSelectList(loadedTextbooks);
+    });
+}
+
+addButton.onclick = function(e){
+    addSelected();
+}
+
+document.getElementById('search-results').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+        e.preventDefault();
+        addSelected();
+    }
+});
+
+document.getElementById('help').onclick = function(e){
+    showHelp();
 }
 
 function downloadTextFile(text, filename) {
