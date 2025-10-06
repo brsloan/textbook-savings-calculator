@@ -19,7 +19,6 @@ searchInput.addEventListener('keyup', function(e){
 
 uploadBtn.onclick = function(e){
     uploadTextFile(function(csv){
-        downloadTextFile(JSON.stringify(csv),'tempJSON.txt');
         parseData(csv);
         fillSelectList(loadedTextbooks);
     });
@@ -259,16 +258,6 @@ function uploadTextFile(callback){
   });
 
   fileInput.click();
-}
-
-function searchData(arrs, column, searchTerm){
-   var colIndex = dataHeaders.indexOf(column);
-
-   var results = arrs.filter(function(arr){
-    return arr[colIndex] ? arr[colIndex].includes(searchTerm) : false;
-   });
-
-   return results;
 }
 
 function uniqBy(a, key) {
