@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 158.94">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+        font-family: FranklinGothic-Medium, 'Franklin Gothic Medium';
+        font-size: 134.18px;
+        font-weight: 500;
+      }
+
+      .cls-2 {
+        fill: #04aa6d;
+      }
+    </style>
+  </defs>
+  <circle class="cls-2" cx="75" cy="75" r="75"/>
+  <text class="cls-1" transform="translate(35.41 117.79) scale(1.03 1)"><tspan x="0" y="0">$</tspan></text>
+</svg>
